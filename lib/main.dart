@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './ui/pages/home.dart';
+import 'locator.dart';
 
 /* 
 Please complete the tasks listed in TODOs in different files
@@ -17,7 +18,10 @@ Please complete the tasks listed in TODOs in different files
 
  */
 
-void main() => runApp(IRememberApp());
+void main() {
+  setupLocator();
+  return runApp(IRememberApp());
+}
 
 class IRememberApp extends StatelessWidget {
   @override

@@ -1,4 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:iremember/services/file_service.dart';
+
+import '../../locator.dart';
 
 //TODO allow user to pick image and display the preview in UI
 //TODO save new data to firestore (upload image to storage)
@@ -11,6 +17,15 @@ class _AddPageState extends State<AddPage> {
   String title;
   String description;
 
+  TextEditingController _titleController =
+      TextEditingController();
+  TextEditingController _descController =
+      TextEditingController();
+
+  FileService _fileService = locator<FileService>();
+
+  File pickedImage;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,32 +33,38 @@ class _AddPageState extends State<AddPage> {
         title: Text("Add item"),
         backgroundColor: Colors.blueAccent,
       ),
-      body: ListView(
-        padding: EdgeInsets.all(10),
-        children: <Widget>[
-          SizedBox(
-            height: 30.0,
-          ),
-          _buildTitleField(),
-          SizedBox(
-            height: 20,
-          ),
-          _buildDescriptionField(),
-          SizedBox(
-            height: 20,
-          ),
-          _buildImgSelectButton(),
-          SizedBox(
-            height: 20,
-          ),
-          _buildSaveButton(context)
-        ],
+      body: Form(
+        child: ListView(
+          padding: EdgeInsets.all(10),
+          children: <Widget>[
+            SizedBox(
+              height: 30.0,
+            ),
+            _buildTitleField(),
+            SizedBox(
+              height: 20,
+            ),
+            _buildDescriptionField(),
+            SizedBox(
+              height: 20,
+            ),
+            pickedImage == null
+                ? Container()
+                : Image.file(pickedImage),
+            _buildImgSelectButton(),
+            SizedBox(
+              height: 20,
+            ),
+            _buildSaveButton(context)
+          ],
+        ),
       ),
     );
   }
 
   TextField _buildTitleField() {
     return TextField(
+      controller: _titleController,
       onChanged: (value) {
         setState(() {
           title = value;
@@ -58,6 +79,7 @@ class _AddPageState extends State<AddPage> {
 
   TextField _buildDescriptionField() {
     return TextField(
+      controller: _descController,
       onChanged: (value) {
         setState(() {
           description = value;
@@ -79,7 +101,15 @@ class _AddPageState extends State<AddPage> {
         icon: Icon(Icons.camera),
         label: Text("Add Image"),
         color: Colors.blue,
-        onPressed: () {},
+        onPressed: () async {
+          File image = await _fileService.pickImage(
+            ImageSource.gallery,
+          );
+
+          setState(() {
+            pickedImage = image;
+          });
+        },
       ),
     );
   }
