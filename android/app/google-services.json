@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1004570642802",
+    "project_id": "kindship-demo",
+    "storage_bucket": "kindship-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1004570642802:android:2fd0b54f9cf11f0e5435eb",
+        "android_client_info": {
+          "package_name": "com.bikramaryal.kindship"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1004570642802-ec8jfh9f5l8v79h9825t4foasnnpkvh2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgKcv2A1jw2V4v60krZu2WgMVlFw4dH1k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1004570642802-ec8jfh9f5l8v79h9825t4foasnnpkvh2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1004570642802-aok3fsalrl7fjdrl40nd1086a8559heu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.bikramaryal.kindship"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
