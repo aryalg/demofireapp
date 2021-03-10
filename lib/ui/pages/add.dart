@@ -5,6 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:iremember/services/file_service.dart';
 
 import '../../locator.dart';
+import '../../models/todo.dart';
+import '../../services/database_service.dart';
+import '../../services/database_service.dart';
 
 //TODO allow user to pick image and display the preview in UI
 //TODO save new data to firestore (upload image to storage)
@@ -22,9 +25,14 @@ class _AddPageState extends State<AddPage> {
   TextEditingController _descController =
       TextEditingController();
 
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   FileService _fileService = locator<FileService>();
+  FirebaseDataProvider _dataProvider =
+      locator<FirebaseDataProvider>();
 
   File pickedImage;
+  String imageLink;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +42,7 @@ class _AddPageState extends State<AddPage> {
         backgroundColor: Colors.blueAccent,
       ),
       body: Form(
+        key: _formKey,
         child: ListView(
           padding: EdgeInsets.all(10),
           children: <Widget>[
@@ -50,7 +59,28 @@ class _AddPageState extends State<AddPage> {
             ),
             pickedImage == null
                 ? Container()
-                : Image.file(pickedImage),
+                : Row(
+                    children: [
+                      Container(
+                        height: MediaQuery.of(context)
+                                .size
+                                .width *
+                            0.5,
+                        child: Image.file(pickedImage),
+                      ),
+                      Spacer(),
+                      RaisedButton(
+                          onPressed: () {
+                            setState(() {
+                              pickedImage = null;
+                            });
+                          },
+                          child: Text('DELETE IMAGE'))
+                    ],
+                  ),
+            SizedBox(
+              height: 20,
+            ),
             _buildImgSelectButton(),
             SizedBox(
               height: 20,
@@ -62,9 +92,15 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  TextField _buildTitleField() {
-    return TextField(
+  TextFormField _buildTitleField() {
+    return TextFormField(
       controller: _titleController,
+      validator: (data) {
+        if (data.trim().isEmpty) {
+          return 'Title cannot be empty';
+        }
+        return null;
+      },
       onChanged: (value) {
         setState(() {
           title = value;
@@ -77,9 +113,15 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  TextField _buildDescriptionField() {
-    return TextField(
+  TextFormField _buildDescriptionField() {
+    return TextFormField(
       controller: _descController,
+      validator: (data) {
+        if (data.trim().isEmpty) {
+          return 'Description cannot be empty';
+        }
+        return null;
+      },
       onChanged: (value) {
         setState(() {
           description = value;
@@ -109,6 +151,10 @@ class _AddPageState extends State<AddPage> {
           setState(() {
             pickedImage = image;
           });
+
+          // Upload image to server and get link
+          imageLink =
+              await _dataProvider.uploadPhoto(pickedImage);
         },
       ),
     );
@@ -122,8 +168,28 @@ class _AddPageState extends State<AddPage> {
         icon: Icon(Icons.save),
         label: Text("Save"),
         color: Colors.blue,
-        onPressed: () async {},
+        onPressed: () async {
+          addTask();
+        },
       ),
     );
+  }
+
+  void addTask() async {
+    if (_formKey.currentState.validate()) {
+      _formKey.currentState.save();
+
+      if (imageLink != null) {
+        Todo taskTobeAdded = Todo(
+            description: _descController.text.trim(),
+            title: _titleController.text.trim(),
+            imageUrl: imageLink);
+
+        await _dataProvider.createNewTask(
+            todo: taskTobeAdded);
+      } else {
+        print('Image is empty');
+      }
+    }
   }
 }

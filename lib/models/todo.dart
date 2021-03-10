@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Todo {
   final String title;
   final String description;
@@ -14,6 +16,15 @@ class Todo {
       title: json['title'],
       description: json['description'],
       imageUrl: json['imageUrl'],
+    );
+  }
+
+  factory Todo.fromFirebase(DocumentSnapshot doc) {
+    Map data = doc.data();
+    return Todo(
+      title: data['title'],
+      description: data['description'],
+      imageUrl: data['imageUrl'],
     );
   }
 

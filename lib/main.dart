@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import './ui/pages/home.dart';
 import 'locator.dart';
@@ -18,8 +19,10 @@ Please complete the tasks listed in TODOs in different files
 
  */
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   setupLocator();
+  await Firebase.initializeApp();
   return runApp(IRememberApp());
 }
 
