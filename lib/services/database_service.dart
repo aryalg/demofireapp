@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:iremember/common/tools.dart';
 import 'package:iremember/config/paths.dart';
 import 'package:iremember/models/todo.dart';
 import 'package:uuid/uuid.dart';
@@ -18,6 +19,7 @@ class FirebaseDataProvider {
   final FirebaseFirestore db = FirebaseFirestore.instance;
 
   Future<List<Todo>> getAllTodoList() async {
+    Tools.showLoadingModal();
     try {
       QuerySnapshot querySnapshot =
           await db.collection(Paths.taskPath).get();
@@ -25,12 +27,15 @@ class FirebaseDataProvider {
       List<Todo> todos = List<Todo>.from(querySnapshot.docs
           .map((snapshot) => Todo.fromFirebase(snapshot)));
 
+      Tools.dismissLoadingModal();
+
       return todos;
 
       // debugger();
 
     } catch (err) {
       print('Failed to get items');
+      Tools.dismissLoadingModal();
       throw err;
     }
   }

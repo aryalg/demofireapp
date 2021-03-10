@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:iremember/enums/viewstate.dart';
 import 'package:iremember/ui/pages/add.dart';
+import 'package:iremember/ui/pages/base_screen.dart';
+import 'package:iremember/viewmodels/home_view_model.dart';
 
-import '../../locator.dart';
 import '../../models/todo.dart';
-import '../../services/database_service.dart';
-import '../../services/database_service.dart';
 
 //TODO List out items from Firestore with image using the state management solution you have integrated
 class HomePage extends StatefulWidget {
@@ -13,54 +14,78 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  FirebaseDataProvider _dataProvider =
-      locator<FirebaseDataProvider>();
-
   @override
   void initState() {
     super.initState();
 
-    _dataProvider.getAllTodoList();
+    EasyLoading.instance
+      ..backgroundColor = Colors.black.withOpacity(0.4)
+      ..maskColor = Colors.black.withOpacity(0.4)
+      ..loadingStyle = EasyLoadingStyle.light
+      ..contentPadding = EdgeInsets.all(20.0)
+      ..indicatorSize = 60.0;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Home"),
-          leading: Icon(Icons.home),
-          backgroundColor: Colors.blueAccent,
-        ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(
-            Icons.add,
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => AddPage(),
+    return BaseScreen<HomeModel>(
+      onModelReady: (model) => model.fetchList(),
+      builder: (context, model, child) {
+        if (model.state == ViewState.Busy) {
+          return Container();
+        }
+        return Scaffold(
+            appBar: AppBar(
+              title: Text("Home"),
+              leading: Icon(Icons.home),
+              backgroundColor: Colors.blueAccent,
+            ),
+            floatingActionButton: FloatingActionButton(
+              child: Icon(
+                Icons.add,
               ),
-            );
-          },
-        ),
-        body: FutureBuilder<List<Todo>>(
-            future: _dataProvider.getAllTodoList(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (context, index) {
-                      Todo todo = snapshot.data[index];
-                      return ListTile(
-                          title: Text(todo.title),
-                          subtitle: Text(todo.description),
-                          leading:
-                              Image.network(todo.imageUrl));
-                    });
-              }
+              onPressed: () async {
+                bool isUpdated = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AddPage(),
+                  ),
+                );
 
-              return Container();
-            }));
+                if (isUpdated == null) {
+                  isUpdated = false;
+                }
+
+                if (isUpdated) {
+                  model.fetchList();
+                }
+              },
+            ),
+            body: model.todoList == null
+                ? Center(
+                    child: Text('Failed to Fetch Data'),
+                  )
+                : ListView.builder(
+                    itemCount: model.todoList.length,
+                    itemBuilder: (context, index) {
+                      Todo todo = model.todoList[index];
+                      return ListTile(
+                        title: Text(todo.title),
+                        subtitle: Text(todo.description),
+                        leading: Container(
+                          height: 50,
+                          width: 50,
+                          child: Image.network(
+                            todo.imageUrl,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        // trailing: Icon(
+                        //   Icons.delete,
+                        // ),
+                      );
+                    }));
+      },
+    );
   }
 }

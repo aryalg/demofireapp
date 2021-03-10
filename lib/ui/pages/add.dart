@@ -2,37 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:iremember/services/file_service.dart';
-
-import '../../locator.dart';
-import '../../models/todo.dart';
-import '../../services/database_service.dart';
-import '../../services/database_service.dart';
+import 'package:iremember/enums/viewstate.dart';
+import 'package:iremember/ui/pages/base_screen.dart';
+import 'package:iremember/viewmodels/create_item_view_model.dart';
 
 //TODO allow user to pick image and display the preview in UI
 //TODO save new data to firestore (upload image to storage)
-class AddPage extends StatefulWidget {
-  @override
-  _AddPageState createState() => _AddPageState();
-}
 
-class _AddPageState extends State<AddPage> {
-  String title;
-  String description;
-
-  TextEditingController _titleController =
+class AddPage extends StatelessWidget {
+  final TextEditingController _titleController =
       TextEditingController();
-  TextEditingController _descController =
+  final TextEditingController _descController =
       TextEditingController();
 
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  FileService _fileService = locator<FileService>();
-  FirebaseDataProvider _dataProvider =
-      locator<FirebaseDataProvider>();
-
-  File pickedImage;
-  String imageLink;
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -41,53 +25,57 @@ class _AddPageState extends State<AddPage> {
         title: Text("Add item"),
         backgroundColor: Colors.blueAccent,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: EdgeInsets.all(10),
-          children: <Widget>[
-            SizedBox(
-              height: 30.0,
-            ),
-            _buildTitleField(),
-            SizedBox(
-              height: 20,
-            ),
-            _buildDescriptionField(),
-            SizedBox(
-              height: 20,
-            ),
-            pickedImage == null
-                ? Container()
-                : Row(
-                    children: [
-                      Container(
-                        height: MediaQuery.of(context)
-                                .size
-                                .width *
-                            0.5,
-                        child: Image.file(pickedImage),
-                      ),
-                      Spacer(),
-                      RaisedButton(
-                          onPressed: () {
-                            setState(() {
-                              pickedImage = null;
-                            });
-                          },
-                          child: Text('DELETE IMAGE'))
-                    ],
+      body: BaseScreen<CreateItemModel>(
+        builder: (context, model, builder) {
+          if (model.state == ViewState.Busy) {
+            return Container();
+          } else {
+            return Form(
+              key: _formKey,
+              child: ListView(
+                padding: EdgeInsets.all(10),
+                children: <Widget>[
+                  SizedBox(
+                    height: 30.0,
                   ),
-            SizedBox(
-              height: 20,
-            ),
-            _buildImgSelectButton(),
-            SizedBox(
-              height: 20,
-            ),
-            _buildSaveButton(context)
-          ],
-        ),
+                  _buildTitleField(),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  _buildDescriptionField(),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  model.pickedImage == null
+                      ? Container()
+                      : Row(
+                          children: [
+                            Container(
+                              width: 200,
+                              child: Image.file(
+                                  model.pickedImage),
+                            ),
+                            Spacer(),
+                            RaisedButton(
+                                onPressed: () {
+                                  model.deletePickedImage();
+                                },
+                                child: Text('DELETE IMAGE'))
+                          ],
+                        ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  _buildImgSelectButton(model),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  _buildSaveButton(model, context)
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
@@ -100,11 +88,6 @@ class _AddPageState extends State<AddPage> {
           return 'Title cannot be empty';
         }
         return null;
-      },
-      onChanged: (value) {
-        setState(() {
-          title = value;
-        });
       },
       decoration: InputDecoration(
           border: OutlineInputBorder(),
@@ -122,11 +105,6 @@ class _AddPageState extends State<AddPage> {
         }
         return null;
       },
-      onChanged: (value) {
-        setState(() {
-          description = value;
-        });
-      },
       maxLines: 4,
       decoration: InputDecoration(
         border: OutlineInputBorder(),
@@ -135,61 +113,52 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  SizedBox _buildImgSelectButton() {
+  SizedBox _buildImgSelectButton(CreateItemModel model) {
     return SizedBox(
       height: 50,
       width: double.infinity,
       child: RaisedButton.icon(
-        icon: Icon(Icons.camera),
-        label: Text("Add Image"),
+        icon: Icon(Icons.camera, color: Colors.white),
+        label: Text(
+          "Add Image",
+          style: TextStyle(color: Colors.white),
+        ),
         color: Colors.blue,
         onPressed: () async {
-          File image = await _fileService.pickImage(
-            ImageSource.gallery,
-          );
-
-          setState(() {
-            pickedImage = image;
-          });
-
           // Upload image to server and get link
-          imageLink =
-              await _dataProvider.uploadPhoto(pickedImage);
+          model.pickImage(imageSource: ImageSource.gallery);
         },
       ),
     );
   }
 
-  SizedBox _buildSaveButton(BuildContext context) {
+  SizedBox _buildSaveButton(
+      CreateItemModel model, BuildContext context) {
     return SizedBox(
       height: 50,
       width: 20.0,
       child: RaisedButton.icon(
-        icon: Icon(Icons.save),
-        label: Text("Save"),
+        icon: Icon(Icons.save, color: Colors.white),
+        label: Text(
+          "Save",
+          style: TextStyle(color: Colors.white),
+        ),
         color: Colors.blue,
         onPressed: () async {
-          addTask();
+          addTask(model);
         },
       ),
     );
   }
 
-  void addTask() async {
+  void addTask(CreateItemModel model) async {
     if (_formKey.currentState.validate()) {
       _formKey.currentState.save();
 
-      if (imageLink != null) {
-        Todo taskTobeAdded = Todo(
-            description: _descController.text.trim(),
-            title: _titleController.text.trim(),
-            imageUrl: imageLink);
-
-        await _dataProvider.createNewTask(
-            todo: taskTobeAdded);
-      } else {
-        print('Image is empty');
-      }
+      model.createNewTask(
+        description: _descController.text,
+        title: _titleController.text,
+      );
     }
   }
 }

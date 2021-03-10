@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:get/get_navigation/src/root/get_material_app.dart';
 import './ui/pages/home.dart';
 import 'locator.dart';
 
@@ -29,10 +31,13 @@ void main() async {
 class IRememberApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'IRemember',
-      theme: ThemeData(primaryColor: Colors.deepOrange),
+      builder: EasyLoading.init(),
+      theme: ThemeData(
+        primaryColor: Colors.deepOrange,
+      ),
       routes: {
         "/": (_) => HomePage(),
       },
